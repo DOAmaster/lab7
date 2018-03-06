@@ -1,5 +1,5 @@
 //
-//modified by:
+//modified by: Derrick Alden
 //date:
 //
 //program: lab7.cpp generated from openg.cpp
@@ -24,6 +24,12 @@
 #include <GL/glx.h>
 #include <GL/glu.h>
 #include "fonts.h"
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#ifdef USE_OPENAL_SOUND
+#include </usr/include/AL/alut.h>
+#endif //USE_OPENAL_SOUND
 
 typedef float Flt;
 typedef Flt Vec[3];
@@ -145,6 +151,64 @@ void render();
 
 int main()
 {
+
+     //Get started right here.
+#ifdef USE_OPENAL_SOUND
+        alutInit(0, NULL);
+        if (alGetError() != AL_NO_ERROR) {
+                printf("ERROR: alutInit()\n");
+                return 0;
+        }
+        //Clear error state.
+        alGetError();
+        //
+        //Setup the listener.
+        //Forward and up vectors are used.
+        float vec[6] = {0.0f,0.0f,1.0f, 0.0f,1.0f,0.0f};
+        alListener3f(AL_POSITION, 0.0f, 0.0f, 0.0f);
+        alListenerfv(AL_ORIENTATION, vec);
+        alListenerf(AL_GAIN, 1.0f);
+        //
+        //Buffer holds the sound information.
+        ALuint alBuffer;
+        alBuffer = alutCreateBufferFromFile("./737engine.wav");
+        //
+        //Source refers to the sound.
+        ALuint alSource;
+        //Generate a source, and store it in a buffer.
+        alGenSources(1, &alSource);
+        alSourcei(alSource, AL_BUFFER, alBuffer);
+        //Set volume and pitch to normal, no looping of sound.
+        alSourcef(alSource, AL_GAIN, 1.0f);
+        alSourcef(alSource, AL_PITCH, 1.0f);
+        alSourcei(alSource, AL_LOOPING, AL_FALSE);
+        if (alGetError() != AL_NO_ERROR) {
+                printf("ERROR: setting source\n");
+                return 0;
+        }
+        for (int i=0; i<4; i++) {
+                alSourcePlay(alSource);
+                usleep(250000);
+        }
+        //Cleanup.
+        //First delete the source.
+        alDeleteSources(1, &alSource);
+        //Delete the buffer.
+        alDeleteBuffers(1, &alBuffer);
+        //Close out OpenAL itself.
+        //Get active context.
+        ALCcontext *Context = alcGetCurrentContext();
+        //Get device for active context.
+        ALCdevice *Device = alcGetContextsDevice(Context);
+        //Disable context.
+        alcMakeContextCurrent(NULL);
+        //Release context(s).
+        alcDestroyContext(Context);
+        //Close device.
+        alcCloseDevice(Device);
+#endif //USE_OPENAL_SOUND
+
+
 	init_opengl();
 	int done=0;
 	while (!done) {
@@ -425,7 +489,31 @@ void drawJet()
  		glVertex3f( 1.5, 0.0, 2.0);
 	glEnd();
 	glPopMatrix();
+
+	/*
+	//clear error state
+	alGetError();
+	//exaggerate pitch
+	alDopplerVelocity(16);
+	if (alGetError() != AL_NO_ERROR) {
+		errorflag++;
+	}
+	//
+	vec[0] = 0.0;
+	*/
+
 }
+/*
+void playJetSound() {
+	float p[3];
+	p[0] = (float)g.jet[0] * 0.1f;
+	p[1] = (float)g.jet[1] * 0.1f;
+	p[2] = (float)g.jet[2] * 0.1f;
+	alSourcefv(alSourcePickup, AL_POSITION, p);
+	alSourcePlay(alSourcePickup);
+
+}
+*/
 
 void physics()
 {
