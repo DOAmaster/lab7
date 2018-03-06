@@ -152,13 +152,59 @@ void render();
 int main()
 {
 
+
+
+	init_opengl();
+	int done=0;
+	while (!done) {
+		while (x11.getXPending()) {
+			XEvent e = x11.getXNextEvent();
+			x11.check_resize(&e);
+			check_mouse(&e);
+			done = check_keys(&e);
+		}
+		physics();
+		render();
+		x11.swapBuffers();
+	}
+	cleanup_fonts();
+
+	/*
+        //Cleanup.
+        //First delete the source.
+        alDeleteSources(1, &alSource);
+        //Delete the buffer.
+        alDeleteBuffers(1, &alBuffer);
+        //Close out OpenAL itself.
+        //Get active context.
+        ALCcontext *Context = alcGetCurrentContext();
+        //Get device for active context.
+        ALCdevice *Device = alcGetContextsDevice(Context);
+        //Disable context.
+        alcMakeContextCurrent(NULL);
+        //Release context(s).
+        alcDestroyContext(Context);
+        //Close device.
+        alcCloseDevice(Device);
+	*/
+	return 0;
+}
+
+void init()
+{
+
+}
+
+void init_opengl()
+{
+
+
      //Get started right here.
      
-#ifdef USE_OPENAL_SOUND
         alutInit(0, NULL);
         if (alGetError() != AL_NO_ERROR) {
                 printf("ERROR: alutInit()\n");
-                return 0;
+                return;
         }
         //Clear error state.
         alGetError();
@@ -185,7 +231,7 @@ int main()
         alSourcei(alSource, AL_LOOPING, AL_TRUE);
         if (alGetError() != AL_NO_ERROR) {
                 printf("ERROR: setting source\n");
-                return 0;
+                return;
         }
         for (int i=0; i<4; i++) {
                 alSourcePlay(alSource);
@@ -194,50 +240,6 @@ int main()
 
 
 
-
-	init_opengl();
-	int done=0;
-	while (!done) {
-		while (x11.getXPending()) {
-			XEvent e = x11.getXNextEvent();
-			x11.check_resize(&e);
-			check_mouse(&e);
-			done = check_keys(&e);
-		}
-		physics();
-		render();
-		x11.swapBuffers();
-	}
-	cleanup_fonts();
-
-        //Cleanup.
-        //First delete the source.
-        alDeleteSources(1, &alSource);
-        //Delete the buffer.
-        alDeleteBuffers(1, &alBuffer);
-        //Close out OpenAL itself.
-        //Get active context.
-        ALCcontext *Context = alcGetCurrentContext();
-        //Get device for active context.
-        ALCdevice *Device = alcGetContextsDevice(Context);
-        //Disable context.
-        alcMakeContextCurrent(NULL);
-        //Release context(s).
-        alcDestroyContext(Context);
-        //Close device.
-        alcCloseDevice(Device);
-#endif //USE_OPENAL_SOUND
-
-	return 0;
-}
-
-void init()
-{
-
-}
-
-void init_opengl()
-{
 	//OpenGL initialization
 	glClearColor(0.5f, 0.6f, 1.0f, 0.0f);
 	glClearDepth(1.0);
@@ -570,17 +572,66 @@ void setupSound() {
 }
 */
 
-/*
+
 void playJetSound() {
+
+        //Buffer holds the sound information.
+        ALuint alBuffer;
+        alBuffer = alutCreateBufferFromFile("./737engine.wav");
+        //
+        //Source refers to the sound.
+        ALuint alSource;
+        //Generate a source, and store it in a buffer.
+        alGenSources(1, &alSource);
+        alSourcei(alSource, AL_BUFFER, alBuffer);
+        //Set volume and pitch to normal, no looping of sound.
+        alSourcef(alSource, AL_GAIN, 1.0f);
+        alSourcef(alSource, AL_PITCH, 1.0f);
+        alSourcei(alSource, AL_LOOPING, AL_FALSE);
+
+
 	float p[3];
 	p[0] = (float)g.jet[0] * 0.1f;
 	p[1] = (float)g.jet[1] * 0.1f;
 	p[2] = (float)g.jet[2] * 0.1f;
-	alSourcefv(alSourcePickup, AL_POSITION, p);
-	alSourcePlay(alSourcePickup);
+//	alSourcefv(alSource, AL_POSITION, p);
+	//alSourcePlay(alSource);
+
+        if (alGetError() != AL_NO_ERROR) {
+              //  printf("ERROR: setting source\n");
+                return;
+        }
+        for (int i=0; i<4; i++) {
+
+		alSourcefv(alSource, AL_POSITION, p);
+                alSourcePlay(alSource);
+                usleep(250000);
+        }
+
+
+
+		
+        //Cleanup.
+        //First delete the source.
+        alDeleteSources(1, &alSource);
+        //Delete the buffer.
+        alDeleteBuffers(1, &alBuffer);
+        //Close out OpenAL itself.
+        //Get active context.
+        //ALCcontext *Context = alcGetCurrentContext();
+        //Get device for active context.
+        //ALCdevice *Device = alcGetContextsDevice(Context);
+        //Disable context.
+        alcMakeContextCurrent(NULL);
+        //Release context(s).
+        //alcDestroyContext(Context);
+        //Close device.
+        //alcCloseDevice(Device);
+	
+	
 
 }
-*/
+
 
 
 void physics()
@@ -610,7 +661,7 @@ void render()
 	drawBuildings();
 	drawWall();
 	drawJet();
-	//setupSound();
+	playJetSound();
 	//
 	//
 	//switch to 2D mode
