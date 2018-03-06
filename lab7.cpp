@@ -48,7 +48,19 @@ public:
 	Vec camera;
 	Vec jet;
 	GLfloat lightPosition[4];
+        ALuint alSource;
+        ALuint alBuffer;
 	Global() {
+
+
+        //Generate a source, and store it in a buffer.
+        alGenSources(1, &alSource);
+        //alSourcei(alSource, AL_BUFFER, alBuffer);
+        //Set volume and pitch to normal, no looping of sound.
+        alSourcef(alSource, AL_GAIN, 1.0f);
+        alSourcef(alSource, AL_PITCH, 1.0f);
+        alSourcei(alSource, AL_LOOPING, AL_TRUE);
+
 		//constructor
 		xres = 640;
 		yres = 480;
@@ -217,26 +229,28 @@ void init_opengl()
         alListenerf(AL_GAIN, 1.0f);
         //
         //Buffer holds the sound information.
-        ALuint alBuffer;
-        alBuffer = alutCreateBufferFromFile("./737engine.wav");
+        //ALuint alBuffer;
+        g.alBuffer = alutCreateBufferFromFile("./737engine.wav");
         //
         //Source refers to the sound.
-        ALuint alSource;
+        //ALuint alSource;
         //Generate a source, and store it in a buffer.
-        alGenSources(1, &alSource);
-        alSourcei(alSource, AL_BUFFER, alBuffer);
+        alGenSources(1, &g.alSource);
+        alSourcei(g.alSource, AL_BUFFER, g.alBuffer);
         //Set volume and pitch to normal, no looping of sound.
-        alSourcef(alSource, AL_GAIN, 1.0f);
-        alSourcef(alSource, AL_PITCH, 1.0f);
-        alSourcei(alSource, AL_LOOPING, AL_TRUE);
+        alSourcef(g.alSource, AL_GAIN, 1.0f);
+        alSourcef(g.alSource, AL_PITCH, 1.0f);
+        alSourcei(g.alSource, AL_LOOPING, AL_TRUE);
         if (alGetError() != AL_NO_ERROR) {
                 printf("ERROR: setting source\n");
                 return;
         }
+/*	
         for (int i=0; i<4; i++) {
-                alSourcePlay(alSource);
+                alSourcePlay(g.alSource);
                 usleep(250000);
         }
+*/	
 
 
 
@@ -470,6 +484,68 @@ void drawWall()
 	glPopMatrix();
 }
 
+
+
+void playJetSound() {
+
+        //Buffer holds the sound information.
+       // ALuint alBuffer;
+        g.alBuffer = alutCreateBufferFromFile("./737engine.wav");
+        //
+        //Source refers to the sound.
+       // ALuint alSource;
+        //Generate a source, and store it in a buffer.
+        alGenSources(1, &g.alSource);
+        alSourcei(g.alSource, AL_BUFFER, g.alBuffer);
+        //Set volume and pitch to normal, no looping of sound.
+        alSourcef(g.alSource, AL_GAIN, 1.0f);
+        alSourcef(g.alSource, AL_PITCH, 1.0f);
+        alSourcei(g.alSource, AL_LOOPING, AL_FALSE);
+
+
+	float p[3];
+	p[0] = (float)g.jet[0] * 0.1f;
+	p[1] = (float)g.jet[1] * 0.1f;
+	p[2] = (float)g.jet[2] * 0.1f;
+
+	alSourcefv(g.alSource, AL_POSITION, p);
+//	alSourcefv(alSource, AL_POSITION, p);
+	//alSourcePlay(alSource);
+
+        if (alGetError() != AL_NO_ERROR) {
+              //  printf("ERROR: setting source\n");
+                return;
+        }
+        for (int i=0; i<4; i++) {
+
+                alSourcePlay(g.alSource);
+                usleep(250000);
+        }
+
+
+
+		
+        //Cleanup.
+        //First delete the source.
+        //alDeleteSources(1, &g.alSource);
+        //Delete the buffer.
+        //alDeleteBuffers(1, &alBuffer);
+        //Close out OpenAL itself.
+        //Get active context.
+        //ALCcontext *Context = alcGetCurrentContext();
+        //Get device for active context.
+        //ALCdevice *Device = alcGetContextsDevice(Context);
+        //Disable context.
+        //alcMakeContextCurrent(NULL);
+        //Release context(s).
+        //alcDestroyContext(Context);
+        //Close device.
+        //alcCloseDevice(Device);
+	
+	
+
+}
+
 void drawJet()
 {
 	glColor3ub(255,0,0);
@@ -497,6 +573,7 @@ void drawJet()
 	glEnd();
 	glPopMatrix();
 
+
 	/*
 	//clear error state
 	alGetError();
@@ -511,132 +588,38 @@ void drawJet()
 
 }
 
-/*
-void setupSound() {
-
-#ifdef USE_OPENAL_SOUND
-        alutInit(0, NULL);
-        if (alGetError() != AL_NO_ERROR) {
-                printf("ERROR: alutInit()\n");
-                return;
-        }
-        //Clear error state.
-        alGetError();
-        //
-        //Setup the listener.
-        //Forward and up vectors are used.
-        float vec[6] = {0.0f,0.0f,1.0f, 0.0f,1.0f,0.0f};
-        alListener3f(AL_POSITION, 0.0f, 0.0f, 0.0f);
-        alListenerfv(AL_ORIENTATION, vec);
-        alListenerf(AL_GAIN, 1.0f);
-        //
-        //Buffer holds the sound information.
-        ALuint alBuffer;
-        alBuffer = alutCreateBufferFromFile("./737engine.wav");
-        //
-        //Source refers to the sound.
-        ALuint alSource;
-        //Generate a source, and store it in a buffer.
-        alGenSources(1, &alSource);
-        alSourcei(alSource, AL_BUFFER, alBuffer);
-        //Set volume and pitch to normal, no looping of sound.
-        alSourcef(alSource, AL_GAIN, 1.0f);
-        alSourcef(alSource, AL_PITCH, 1.0f);
-        alSourcei(alSource, AL_LOOPING, AL_FALSE);
-        if (alGetError() != AL_NO_ERROR) {
-                printf("ERROR: setting source\n");
-                return;
-        }
-        for (int i=0; i<4; i++) {
-                alSourcePlay(alSource);
-                usleep(250000);
-        }
-        //Cleanup.
-        //First delete the source.
-        alDeleteSources(1, &alSource);
-        //Delete the buffer.
-        alDeleteBuffers(1, &alBuffer);
-        //Close out OpenAL itself.
-        //Get active context.
-        ALCcontext *Context = alcGetCurrentContext();
-        //Get device for active context.
-        ALCdevice *Device = alcGetContextsDevice(Context);
-        //Disable context.
-        alcMakeContextCurrent(NULL);
-        //Release context(s).
-        alcDestroyContext(Context);
-        //Close device.
-        alcCloseDevice(Device);
-#endif //USE_OPENAL_SOUND
-
-}
-*/
-
-
-void playJetSound() {
-
-        //Buffer holds the sound information.
-        ALuint alBuffer;
-        alBuffer = alutCreateBufferFromFile("./737engine.wav");
-        //
-        //Source refers to the sound.
-        ALuint alSource;
-        //Generate a source, and store it in a buffer.
-        alGenSources(1, &alSource);
-        alSourcei(alSource, AL_BUFFER, alBuffer);
-        //Set volume and pitch to normal, no looping of sound.
-        alSourcef(alSource, AL_GAIN, 1.0f);
-        alSourcef(alSource, AL_PITCH, 1.0f);
-        alSourcei(alSource, AL_LOOPING, AL_FALSE);
+void physics()
+{
+	g.jet[2] -= 1.0;
 
 
 	float p[3];
 	p[0] = (float)g.jet[0] * 0.1f;
 	p[1] = (float)g.jet[1] * 0.1f;
 	p[2] = (float)g.jet[2] * 0.1f;
-//	alSourcefv(alSource, AL_POSITION, p);
-	//alSourcePlay(alSource);
 
+	alSourcefv(g.alSource, AL_POSITION, p);
+	alSourcefv(g.alSource, AL_POSITION, p);
+	alSourcePlay(g.alSource);
+
+	/*
         if (alGetError() != AL_NO_ERROR) {
               //  printf("ERROR: setting source\n");
                 return;
         }
         for (int i=0; i<4; i++) {
 
-		alSourcefv(alSource, AL_POSITION, p);
-                alSourcePlay(alSource);
+                alSourcePlay(g.alSource);
                 usleep(250000);
         }
+	*/
 
 
 
-		
-        //Cleanup.
-        //First delete the source.
-        alDeleteSources(1, &alSource);
-        //Delete the buffer.
-        alDeleteBuffers(1, &alBuffer);
-        //Close out OpenAL itself.
-        //Get active context.
-        //ALCcontext *Context = alcGetCurrentContext();
-        //Get device for active context.
-        //ALCdevice *Device = alcGetContextsDevice(Context);
-        //Disable context.
-        alcMakeContextCurrent(NULL);
-        //Release context(s).
-        //alcDestroyContext(Context);
-        //Close device.
-        //alcCloseDevice(Device);
-	
-	
 
-}
+//	playJetSound();
 
 
-
-void physics()
-{
-	g.jet[2] -= 1.0;
 }
 
 void render()
@@ -660,8 +643,11 @@ void render()
 	drawGround();
 	drawBuildings();
 	drawWall();
+	//sound called in draw Jet
 	drawJet();
-	playJetSound();
+
+	//
+	//playJetSound();
 	//
 	//
 	//switch to 2D mode
