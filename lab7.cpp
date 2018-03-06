@@ -590,34 +590,24 @@ void drawJet()
 
 void physics()
 {
-	g.jet[2] -= 1.0;
+    	//move jet
+	g.jet[2] -= 2.0;
 
-
+	//play sound on moving jet
 	float p[3];
 	p[0] = (float)g.jet[0] * 0.1f;
 	p[1] = (float)g.jet[1] * 0.1f;
 	p[2] = (float)g.jet[2] * 0.1f;
 
+	float v[3];
+	v[0] = 0;
+	v[1] = 0;
+	v[3] = -1000;
+
 	alSourcefv(g.alSource, AL_POSITION, p);
-	alSourcefv(g.alSource, AL_POSITION, p);
+	alSourcefv(g.alSource, AL_VELOCITY, v);
 	alSourcePlay(g.alSource);
 
-	/*
-        if (alGetError() != AL_NO_ERROR) {
-              //  printf("ERROR: setting source\n");
-                return;
-        }
-        for (int i=0; i<4; i++) {
-
-                alSourcePlay(g.alSource);
-                usleep(250000);
-        }
-	*/
-
-
-
-
-//	playJetSound();
 
 
 }
@@ -643,12 +633,8 @@ void render()
 	drawGround();
 	drawBuildings();
 	drawWall();
-	//sound called in draw Jet
+	//sound called in physics
 	drawJet();
-
-	//
-	//playJetSound();
-	//
 	//
 	//switch to 2D mode
 	//
